@@ -86,11 +86,20 @@ def main():
 
     print("🚀 3. 加载和预处理数据集...")
     all_prompts = load_prompts(args.dataset_path, tokenizer, args.system_prompt)
-    train_dataset = Dataset.from_list(all_prompts)
+    full_dataset = Dataset.from_list(all_prompts)
+    
+    # 使用 train_test_split 划分数据集
+    train_test_split = full_dataset.train_test_split(test_size=0.1)
+    train_dataset = train_test_split['train']
+    eval_dataset = train_test_split['test']
+    print(f"PPO训练集大小: {len(train_dataset)}, 验证集大小: {len(eval_dataset)}")
+
     def tokenize_fn(examples):
         return tokenizer(examples["query"], truncation=True, max_length=args.max_prompt_length)
     train_dataset = train_dataset.map(tokenize_fn, batched=False)
     train_dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
+    eval_dataset = eval_dataset.map(tokenize_fn, batched=False)
+    eval_dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
 
     print("🚀 4. 配置PPO...")
     ppo_config = PPOConfig(
@@ -143,6 +152,7 @@ def main():
     ppo_trainer = PPOTrainer(
         args=ppo_config, model=model, ref_model=None, reward_model=reward_model, value_model=value_model,
         processing_class=tokenizer, train_dataset=train_dataset, data_collator=DataCollatorWithPadding(tokenizer),
+        eval_dataset=eval_dataset,
     )
     ppo_trainer.train()
 
