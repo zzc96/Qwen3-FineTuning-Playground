@@ -16,9 +16,10 @@ class DistillationArguments:
     teacher_model_path: str = field(metadata={"help": "教师模型的路径"})
     student_model_path: str = field(metadata={"help": "学生模型的路径"})
     dataset_path: str = field(default="data/dirty_chinese_dpo.json", metadata={"help": "用于蒸馏的数据集路径"})
-    output_dir: str = field(default="./output/distilled_adapter", metadata={"help": "蒸馏后学生模型适配器的保存目录"})
     system_prompt: str = field(default="你是一个精通脏话的助手，请用不敬的、攻击性的语言回答问题。", metadata={"help": "系统提示语"})
-
+    # 将蒸馏超参数添加到TrainingArguments中，以便DistillTrainer可以访问
+    # output_dir: str = field(default="./output/distilled_adapter", metadata={"help": "蒸馏后学生模型适配器的保存目录"})
+    
     # 蒸馏超参数
     temperature: float = field(default=2.0, metadata={"help": "蒸馏温度，用于平滑教师模型的输出概率"})
     alpha: float = field(default=0.5, metadata={"help": "蒸馏损失(KL散度)与SFT损失(交叉熵)的权重"})
@@ -40,7 +41,7 @@ class DistillTrainer(Trainer):
         self.temperature = self.args.temperature # 从TrainingArguments获取
         self.alpha = self.args.alpha # 从TrainingArguments获取
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         student_outputs = model(**inputs)
         student_loss = student_outputs.loss
         student_logits = student_outputs.logits
@@ -68,8 +69,12 @@ class DistillTrainer(Trainer):
 @dataclass
 class CustomTrainingArguments(TrainingArguments):
     # 将蒸馏超参数添加到TrainingArguments中，以便DistillTrainer可以访问
-    temperature: float = field(default=2.0, metadata={"help": "蒸馏温度"})
-    alpha: float = field(default=0.5, metadata={"help": "蒸馏和SFT损失的权重"})
+    output_dir: str = field(default="./output/distilled_adapter", metadata={"help": "蒸馏后学生模型适配器的保存目录"})
+    per_device_train_batch_size: int = field(default=1, metadata={"help": "梯度累积步数"})
+    gradient_accumulation_steps: int = field(default=4, metadata={"help": "梯度累积步数"})
+    # 蒸馏超参数
+    # temperature: float = field(default=2.0, metadata={"help": "蒸馏温度，用于平滑教师模型的输出概率"})
+    # alpha: float = field(default=0.5, metadata={"help": "蒸馏损失(KL散度)与SFT损失(交叉熵)的权重"})
 
 
 def main():
@@ -151,10 +156,10 @@ def main():
     trainer.train()
 
     # --- 7. 保存模型 ---
-    print(f"💾 7. 保存蒸馏后的学生模型适配器到: {distill_args.output_dir}")
-    os.makedirs(distill_args.output_dir, exist_ok=True)
-    trainer.save_model(distill_args.output_dir)
-    tokenizer.save_pretrained(distill_args.output_dir)
+    print(f"💾 7. 保存蒸馏后的学生模型适配器到: {training_args.output_dir}")
+    os.makedirs(training_args.output_dir, exist_ok=True)
+    trainer.save_model(training_args.output_dir)
+    tokenizer.save_pretrained(training_args.output_dir)
 
     print("✅ 蒸馏训练完成！")
     if distill_args.use_swanlab: swanlab.finish()
