@@ -26,6 +26,10 @@
     -   **模块化设计**: 所有代码按功能清晰划分，易于理解和维护。
     -   **完全参数化**: 所有脚本均可通过命令行参数配置，无需修改代码即可运行。
     -   **详细教程**: 提供从0到1的示例教程，带你走完每个微调流程。
+-   新增实验：心理学多轮对话（PsyDT）
+    -   基于开源心理学对话数据集，提供 SFT-LoRA 训练与推理示例
+    -   数据集： [PsyDTCorpus](https://modelscope.cn/datasets/YIRONGCHEN/PsyDTCorpus)
+    -   文档：`example/SFT_PSYDT/README.md`
 
 ---
 
@@ -124,6 +128,7 @@ python inference/inference_dirty_sft.py \
 -   **[SFT -> RM -> PPO 完整流程教程](./example/SFT+RM+PPO/README.md)**
 -   **[ORPO 单步高效对齐教程](./example/ORPO/README_ORPO.md)**
 -   **[知识蒸馏教程](./example/distill/README_Distillation.md)**
+-   **[心理学多轮对话 SFT 教程](./example/SFT_PSYDT/README.md)**
 
 ---
 
@@ -143,8 +148,10 @@ python inference/inference_dirty_sft.py \
 
 -   感谢 **Qwen Team** 提供了如此强大的开源模型。
 -   感谢 **Hugging Face** 生态提供的 `transformers`, `peft`, `trl` 等优秀工具库。
+-   数据集：
+    -   骂人数据集：[btfChinese-DPO-small](https://www.modelscope.cn/datasets/jackmokaka/btfChinese-DPO-small)
+    -   心理学数据集：[PsyDTCorpus](https://modelscope.cn/datasets/YIRONGCHEN/PsyDTCorpus)
 
----
 
 ## 开源协议
 
